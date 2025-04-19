@@ -2,3 +2,5 @@
 .idea
 Cargo.lock
 .env
+/migration/.cargo-lock
+/migration/target

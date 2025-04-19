@@ -3,6 +3,8 @@ mod dto;
 mod handlers;
 mod models;
 mod routes;
+mod services;
+mod utils;
 
 use crate::dto::response_dto::CommonRs;
 use crate::models::common_dto::Claims;
@@ -34,7 +36,7 @@ async fn member_middleware(
         .and_then(|auth| auth.strip_prefix("Bearer "))
         .unwrap_or("");
 
-    if req.path() == "/api/login" {
+    if req.path() == "/api/login" || req.path() == "/api/logout" || req.path() == "/api/register" {
         return next.call(req).await.map(|res| res.map_into_boxed_body());
     }
 

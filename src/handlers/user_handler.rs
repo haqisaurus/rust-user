@@ -19,7 +19,7 @@ pub async fn get_users(
     // Filter by name (e.g., LIKE %name%)
     if let Some(ref name) = query.name {
         query_builder = query_builder
-            .filter(Expr::col(user::Column::Login).ilike(format!("%{}%", name.clone())));
+            .filter(Expr::col(user::Column::Username).ilike(format!("%{}%", name.clone())));
     }
 
     // Sorting
@@ -30,9 +30,9 @@ pub async fn get_users(
         };
 
         query_builder = match sort_by.as_str() {
-            "name" => query_builder.order_by(user::Column::Login, order),
+            "name" => query_builder.order_by(user::Column::Username, order),
             "email" => query_builder.order_by(user::Column::Password, order),
-            "created_at" => query_builder.order_by(user::Column::CreatedDate, order),
+            "created_at" => query_builder.order_by(user::Column::CreatedAt, order),
             _ => query_builder,
         };
     }

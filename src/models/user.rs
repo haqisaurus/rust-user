@@ -7,10 +7,56 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "user")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i64,
-    pub login: Option<String>,
-    pub password: Option<String>,
-    pub created_date: Option<DateTime>,
+    pub id: i64, // Or i64 if using bigint in DB
+
+    pub username: String,
+    pub password: String,
+    #[sea_orm(column_name = "first_name")]
+    pub first_name: String,
+    #[sea_orm(column_name = "last_name")]
+    pub last_name: String,
+    pub photo: Option<String>,
+    pub activated: bool,
+    pub email: String,
+    #[sea_orm(column_name = "language")]
+    pub language: String,
+    pub currency: String,
+    pub notification: bool,
+    #[sea_orm(column_name = "activation_key")]
+    pub activation_key: String,
+    #[sea_orm(column_name = "reset_key")]
+    pub reset_key: Option<String>,
+    #[sea_orm(column_name = "reset_date")]
+    pub reset_date: Option<DateTimeWithTimeZone>,
+    pub admin: bool,
+    #[sea_orm(column_name = "must_change_password")]
+    pub must_change_password: bool,
+    #[sea_orm(column_name = "enforce_password_policy")]
+    pub enforce_password_policy: bool,
+    #[sea_orm(column_name = "wrong_password_locked")]
+    pub wrong_password_locked: bool,
+    #[sea_orm(column_name = "locked_date")]
+    pub locked_date: Option<DateTimeWithTimeZone>,
+    #[sea_orm(column_name = "disable_mobile_android")]
+    pub disable_mobile_android: bool,
+    #[sea_orm(column_name = "disable_mobile_ios")]
+    pub disable_mobile_ios: bool,
+    #[sea_orm(column_name = "disable_web")]
+    pub disable_web: bool,
+    #[sea_orm(column_name = "account_type")]
+    pub account_type: String,
+    // #[sea_orm(column_type = "BigInteger", column_name = "employee_id")]
+    // pub employee_id: i64,
+    #[sea_orm(column_name = "created_at")]
+    pub created_at: DateTime,
+    #[sea_orm(column_name = "created_by")]
+    pub created_by: String,
+    #[sea_orm(column_name = "activated_at")]
+    pub activated_at: Option<DateTime>,
+    #[sea_orm(column_name = "updated_at")]
+    pub updated_at: DateTime,
+    #[sea_orm(column_name = "updated_by")]
+    pub updated_by: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
