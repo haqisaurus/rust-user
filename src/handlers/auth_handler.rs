@@ -1,22 +1,28 @@
+use crate::AppState;
 use crate::dto::request_dto::{LoginRq, RegisterRq};
 use crate::dto::response_dto::{CommonRs, LoginRs};
 use crate::models::common_dto::Claims;
 use crate::models::user;
-use crate::services::user_service::{get_current_user_by_username, get_unique_by_email, get_unique_by_username};
-use crate::AppState;
-use actix_web::{web, Error, HttpResponse};
+use crate::services::user_service::{
+    create_audit_log, get_current_user_by_username, get_unique_by_email, get_unique_by_username,
+    update_audit_log,
+};
+use crate::utils::mail_util::send_email_activation;
+use actix_web::{Error, HttpRequest, HttpResponse, web};
 use chrono::Duration;
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use sea_orm::sqlx::types::chrono::Local;
 use sea_orm::{ActiveModelTrait, Set, TransactionTrait};
 use std::env;
-use crate::utils::mail_util::send_email_activation;
 
 pub async fn post_login(
     data: web::Data<AppState>,
     req: web::Json<LoginRq>,
+    http_req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let conn = &data.conn;
+    // create log data
+    let log_id = create_audit_log(&conn, &http_req, &req).await;
 
     // check data on db
     let result_model = match get_current_user_by_username(&req, conn).await {
@@ -73,6 +79,16 @@ pub async fn post_login(
     let exp_refresh = (now + Duration::hours(4)).timestamp();
     let refresh_token = hash_ids.encode(&[exp_refresh as u64]);
 
+    // update log data
+    update_audit_log(
+        conn,
+        &token,
+        &refresh_token,
+        current_user.id,
+        log_id,
+    )
+    .await;
+
     Ok(HttpResponse::Ok().json(CommonRs {
         message: "SUCCESS".to_string(),
         code: "0".to_string(),
@@ -119,8 +135,8 @@ pub async fn post_register(
     }
 
     // saving data
-    use bcrypt::{hash, DEFAULT_COST};
-    let password = hash("hunter2", DEFAULT_COST);
+    use bcrypt::{DEFAULT_COST, hash};
+    let password = hash(req.password.clone(), DEFAULT_COST);
 
     // generate activation key
     let hash_id_salt: String = env::var("HASH_ID_SALT").unwrap_or_else(|_| "walla".to_string());
@@ -165,7 +181,7 @@ pub async fn post_register(
 
     let result_insert = new_user.insert(&txn).await;
     if result_insert.is_err() {
-         let response = CommonRs {
+        let response = CommonRs {
             code: "5000".to_string(),
             message: result_insert.err().unwrap().to_string(),
             data: "".to_string(),
@@ -174,10 +190,10 @@ pub async fn post_register(
     }
 
     // send email
-    let result_send_email  = send_email_activation(&req, &activation_key).await;
+    let result_send_email = send_email_activation(&req, &activation_key).await;
     if result_send_email.is_err() {
         txn.rollback().await.unwrap();
-        return Ok(result_send_email.err().unwrap())
+        return Ok(result_send_email.err().unwrap());
     }
     log::info!("{}", result_send_email.unwrap());
     txn.commit().await.unwrap();
