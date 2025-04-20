@@ -86,9 +86,9 @@ pub async fn create_audit_log(
         status: Set("FAILED".to_string()),
         user_agent: Set(user_agent.parse().unwrap()),
         ip: Set(ip),
-        expired_at: Set(Local::now().naive_local()),
-        token: Set("".to_string()),
-        refresh_token: Set("".to_string()),
+        expired_at: Set(Some(Default::default())),
+        token: Set(Some(Default::default())),
+        refresh_token: Set(Some(Default::default())),
         platform: Set(platform.parse().unwrap()),
         activity: Set("LOGIN".to_string()),
     };
@@ -107,8 +107,8 @@ pub async fn update_audit_log(
         UserAudit::find_by_id(log_id).one(conn).await.unwrap();
     let mut audit_data: user_audit::ActiveModel = result_data.unwrap().into();
     audit_data.user_id = Set(user_id);
-    audit_data.token = Set(token.clone());
-    audit_data.refresh_token = Set(refresh_token.clone());
+    audit_data.token = Set(Some(token.clone()));
+    audit_data.refresh_token = Set(Some(refresh_token.clone()));
     audit_data.status = Set("SUCCESS".to_string());
     audit_data.update(conn).await.unwrap();
 }

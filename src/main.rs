@@ -7,7 +7,7 @@ mod services;
 mod utils;
 
 use crate::dto::response_dto::CommonRs;
-use crate::models::common_dto::Claims;
+use dto::common_dto::Claims;
 use actix_web::body::{BoxBody};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::middleware::{from_fn, Logger, Next};

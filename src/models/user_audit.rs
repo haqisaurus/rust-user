@@ -19,11 +19,11 @@ pub struct Model {
     #[sea_orm(column_name = "ip")]
     pub ip: String,
     #[sea_orm(column_name = "expired_at")]
-    pub expired_at: DateTime,
+    pub expired_at: Option<DateTime>,
     #[sea_orm(column_name = "token")]
-    pub token: String,
+    pub token: Option<String>,
     #[sea_orm(column_name = "refresh_token")]
-    pub refresh_token: String,
+    pub refresh_token: Option<String>,
     #[sea_orm(column_name = "platform")]
     pub platform: String,
     #[sea_orm(column_name = "activity")]
@@ -31,7 +31,30 @@ pub struct Model {
 }
 
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    // #[sea_orm(
+    //     belongs_to = "super::cake::Entity",
+    //     from = "Column::CakeId",
+    //     to = "super::cake::Column::Id"
+    // )]
+    User,
+}
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        match self {
+            Self::User => Entity::belongs_to(super::user::Entity)
+                .from(Column::Username)
+                .to(super::user::Column::Username)
+                .into(),
+        }
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

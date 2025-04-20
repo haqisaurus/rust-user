@@ -1,5 +1,34 @@
 
 use serde::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize)]
+pub struct UserAuditJoinExampleRs {
+    pub id: i64,
+    pub username: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub status: String,
+    pub activity: String,
+    pub user_agent: String,
+    pub platform: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserAuditNestedExampleRs {
+    pub id: i64,
+    pub username: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub logs: Vec<UserAuditExampleRs>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserAuditExampleRs {
+    pub id: i64,
+    pub status: String,
+    pub activity: String,
+    pub user_agent: String,
+    pub platform: String,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct LoginRs {

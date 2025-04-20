@@ -1,7 +1,7 @@
 use crate::AppState;
 use crate::dto::request_dto::{LoginRq, RegisterRq};
 use crate::dto::response_dto::{CommonRs, LoginRs};
-use crate::models::common_dto::Claims;
+use crate::dto::common_dto::Claims;
 use crate::models::user;
 use crate::services::user_service::{
     create_audit_log, get_current_user_by_username, get_unique_by_email, get_unique_by_username,
