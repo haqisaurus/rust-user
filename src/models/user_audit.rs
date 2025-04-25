@@ -40,6 +40,7 @@ pub enum Relation {
     // )]
     User,
 }
+
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {

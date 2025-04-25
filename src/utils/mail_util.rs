@@ -1,12 +1,14 @@
-use std::env;
-use actix_web::HttpResponse;
-use lettre::{Message, SmtpTransport, Transport};
+use crate::dto::error_dto::AppError;
+use crate::dto::request_dto::RegisterRq;
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
-use crate::dto::request_dto::RegisterRq;
-use crate::dto::response_dto::CommonRs;
+use lettre::{Message, SmtpTransport, Transport};
+use std::env;
 
-pub async fn send_email_activation(req : &RegisterRq, activation_key : &String) -> Result<String, HttpResponse> {
+pub async fn send_email_activation(
+    req: &RegisterRq,
+    activation_key: &String,
+) -> Result<String, AppError> {
     let mut to = "".to_string();
     to.push_str(&req.first_name);
     to.push_str(&" ".to_string());
@@ -36,9 +38,9 @@ pub async fn send_email_activation(req : &RegisterRq, activation_key : &String) 
         .subject("Activation account")
         .multipart(
             MultiPart::alternative().singlepart(
-                SinglePart::builder().header(
-                    header::ContentType::TEXT_HTML).body( html_content.to_string()
-                )
+                SinglePart::builder()
+                    .header(header::ContentType::TEXT_HTML)
+                    .body(html_content.to_string()),
             ),
         )
         .unwrap();
@@ -59,17 +61,6 @@ pub async fn send_email_activation(req : &RegisterRq, activation_key : &String) 
     // Send the email
     match mailer.send(&email) {
         Ok(_) => return Ok("email sent".to_string()),
-        Err(e) =>
-            {
-                log::error!("Error sending email: {:?}", e);
-                let response = CommonRs {
-                    code: "5000".to_string(),
-                    message:format!("Email sending failed: {}", to),
-                    data: "".to_string(),
-                };
-                Err(HttpResponse::InternalServerError().json(response))
-
-                // Err(ErrorInternalServerError(e.to_string()))
-            },
+        Err(e) => Err(AppError::InternalError(500000, e.to_string())),
     }
 }

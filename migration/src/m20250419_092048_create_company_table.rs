@@ -21,8 +21,8 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(string(Company::Name))
-                    .col(text(Company::Description))
+                    .col(string(Company::Name).not_null())
+                    .col(text_null(Company::Description))
                     .col(ColumnDef::new(Company::Logo).string().null())
                     .col(ColumnDef::new(Company::Slug).string().null())
                     .col(ColumnDef::new(Company::Status).string().not_null())
@@ -57,8 +57,10 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Company::CheckedAllData).boolean().default(false))
                     .col(timestamp(Company::CreatedAt))
                     .col(string(Company::CreatedBy))
-                    .col(timestamp(Company::UpdatedAt))
-                    .col(string(Company::UpdatedBy))
+                    .col(timestamp_null(Company::UpdatedAt))
+                    .col(ColumnDef::new(Company::UpdatedBy).string().null())
+                    .col(timestamp_null(Company::DeletedAt))
+                    .col(ColumnDef::new(Company::DeletedBy).string().null())
                     .to_owned(),
             )
             .await
@@ -112,9 +114,10 @@ enum Company {
     SendContract,
     ContractDoc,
     CheckedAllData,
-    CreatedAccountDate,
     CreatedAt,
     CreatedBy,
     UpdatedAt,
     UpdatedBy,
+    DeletedAt,
+    DeletedBy
 }

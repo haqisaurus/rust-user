@@ -6,19 +6,19 @@ mod routes;
 mod services;
 mod utils;
 
-use crate::dto::response_dto::CommonRs;
-use dto::common_dto::Claims;
-use actix_web::body::{BoxBody};
+use actix_web::body::BoxBody;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
-use actix_web::middleware::{from_fn, Logger, Next};
-use actix_web::{web, App, Error, HttpMessage, HttpResponse, HttpServer};
+use actix_web::middleware::{Logger, Next, from_fn};
+use actix_web::{App, Error, HttpMessage, HttpResponse, HttpServer, web};
 use dotenv::dotenv;
+use dto::common_dto::Claims;
 use env_logger::Env;
 use jsonwebtoken::errors::ErrorKind;
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use routes::user_routes::init_routes;
 use sea_orm::DatabaseConnection;
 use std::env;
+use crate::dto::error_dto::ErrorResponse;
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -52,6 +52,7 @@ async fn member_middleware(
         &validation,
     ) {
         Ok(token_data) => {
+            println!("{:?}", token_data.claims);
             req.extensions_mut().insert(token_data.claims);
             next.call(req).await.map(|res| res.map_into_boxed_body())
         }
@@ -65,8 +66,8 @@ async fn member_middleware(
 
             let response = HttpResponse::Unauthorized()
                 .content_type("application/json")
-                .json(CommonRs {
-                    code: "4001".to_string(),
+                .json(ErrorResponse {
+                    code: 401004,
                     message: message.to_string(),
                     data: "".to_string(),
                 });
@@ -91,7 +92,9 @@ async fn main() -> std::io::Result<()> {
     //     .init();
 
     let db_pool = config::db::setup_database().await;
-    let state = AppState { conn: db_pool };
+    let state = AppState {
+        conn: db_pool,
+    };
 
     HttpServer::new(move || {
         App::new()

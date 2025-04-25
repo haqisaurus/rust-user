@@ -26,8 +26,10 @@ impl MigrationTrait for Migration {
                     .col(text(Role::Description).not_null())
                     .col(timestamp(Role::CreatedAt))
                     .col(string(Role::CreatedBy))
-                    .col(timestamp(Role::UpdatedAt))
-                    .col(string(Role::UpdatedBy))
+                    .col(timestamp_null(Role::UpdatedAt))
+                    .col(ColumnDef::new(Role::UpdatedBy).string().null())
+                    .col(timestamp_null(Role::DeletedAt))
+                    .col(ColumnDef::new(Role::DeletedBy).string().null())
                     .to_owned(),
             ).await
     }
@@ -53,4 +55,6 @@ enum Role {
     CreatedBy,
     UpdatedAt,
     UpdatedBy,
+    DeletedAt,
+    DeletedBy
 }

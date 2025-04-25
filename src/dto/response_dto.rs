@@ -1,5 +1,25 @@
-
+use sea_orm::prelude::DateTime;
 use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct PermissionRs {
+    pub id: i64,
+    pub name: String,
+    pub description: String,
+    pub group: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: DateTime,
+    #[serde(rename = "createdBy")]
+    pub created_by: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: Option<DateTime>,
+    #[serde(rename = "updatedBy")]
+    pub updated_by: Option<String>,
+    #[serde(rename = "deletedAt")]
+    pub deleted_at: Option<DateTime>,
+    #[serde(rename = "deletedBy")]
+    pub deleted_by: Option<String>,
+}
 #[derive(Serialize, Deserialize)]
 pub struct UserAuditJoinExampleRs {
     pub id: i64,

@@ -1,6 +1,6 @@
+use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 use std::env;
 use std::time::Duration;
-use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 
 pub async fn setup_database() -> DatabaseConnection {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");

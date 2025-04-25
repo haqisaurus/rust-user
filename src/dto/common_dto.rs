@@ -10,7 +10,7 @@ pub struct PaginationRq {
     pub order: Option<String>,    //
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub iss: String,
     pub sub: String,

@@ -63,12 +63,15 @@ pub struct Model {
 pub enum Relation {
     // #[sea_orm(has_many = "super::fruit::Entity")]
     UserAudit,
+    // #[sea_orm(has_many = "super::company::Entity")]
+    Company,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
             Self::UserAudit => Entity::has_many(super::user_audit::Entity).into(),
+            Self::Company => Entity::has_many(super::user_audit::Entity).into(),
         }
     }
 }
@@ -76,6 +79,12 @@ impl RelationTrait for Relation {
 impl Related<super::user_audit::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::UserAudit.def()
+    }
+}
+
+impl Related<super::company::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Company.def()
     }
 }
 

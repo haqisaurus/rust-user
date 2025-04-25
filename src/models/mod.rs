@@ -1,3 +1,7 @@
 pub mod user;
 pub mod prelude;
 pub mod user_audit;
+pub mod company;
+pub mod permission;
+pub mod role;
+pub mod rel_role_permission;

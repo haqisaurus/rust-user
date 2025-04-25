@@ -1,4 +1,4 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -70,32 +70,14 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum User {
     Table,
-    Id,
-    Username,
-    Password,
-    FirstName,
-    LastName,
-    Email,
-    Activated,
-    Language,
-    Currency,
-    Notification,
-    ActivationKey,
     ResetDate,
     ResetKey,
-    Admin,
     MustChangePassword,
     EnforcePasswordPolicy,
     WrongPasswordLocked,
     LockedDate,
-    DisableMobileAndroid,
-    DisableMobileIos,
-    DisableWeb,
-    AccountType,
-    CreatedAt,
-    CreatedBy,
-    UpdatedAt,
-    UpdatedBy,
+    Notification,
+
     ActivatedAt,
     Photo,
     EmployeeId,

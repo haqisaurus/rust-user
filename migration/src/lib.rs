@@ -9,6 +9,7 @@ mod m20250419_094444_create_role_permission_table;
 mod m20250419_094627_create_user_company_role_table;
 mod m20250419_094816_create_user_company_permission_table;
 mod m20250419_095857_create_user_audit_log_table;
+mod m20250423_082948_alter_company_domain_table;
 
 pub struct Migrator;
 
@@ -25,6 +26,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250419_094627_create_user_company_role_table::Migration),
             Box::new(m20250419_094816_create_user_company_permission_table::Migration),
             Box::new(m20250419_095857_create_user_audit_log_table::Migration),
+            Box::new(m20250423_082948_alter_company_domain_table::Migration),
         ]
     }
 }

@@ -1,37 +1,33 @@
+use crate::dto::error_dto::AppError;
 use crate::dto::request_dto::LoginRq;
-use crate::dto::response_dto::CommonRs;
 use crate::models::prelude::{User, UserAudit};
 use crate::models::user::Model;
 use crate::models::{user, user_audit};
 use crate::utils::misc_util::detect_os;
 use actix_web::web::Json;
-use actix_web::{Error, HttpRequest, HttpResponse};
+use actix_web::HttpRequest;
 use chrono::Local;
 use sea_orm::prelude::Expr;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 
 pub async fn get_current_user_by_username(
     login_req: &Json<LoginRq>,
     conn: &DatabaseConnection,
-) -> Result<Model, Result<HttpResponse, Error>> {
+) -> Result<Model, AppError> {
     let condition = Expr::col(user::Column::Username).eq(login_req.username.clone());
     let result_model = User::find().filter(condition).one(conn).await;
     let current_user = result_model.as_ref().map(|s| s.clone()).unwrap();
     if result_model.is_err() {
-        let response = CommonRs {
-            code: "5000".to_string(),
-            message: result_model.err().unwrap().to_string(),
-            data: "".to_string(),
-        };
-        return Err(Ok(HttpResponse::InternalServerError().json(response)));
+        return Err(AppError::InternalError(
+            10002,
+            result_model.err().unwrap().to_string(),
+        ));
     }
-    if result_model.unwrap().is_none() {
-        let response = CommonRs {
-            code: "4001".to_string(),
-            message: "Invalid username or password".to_string(),
-            data: "".to_string(),
-        };
-        return Err(Ok(HttpResponse::Unauthorized().json(response)));
+    if result_model?.is_none() {
+        return Err(AppError::Unauthorized(
+            10002,
+            "Invalid username or password".to_string(),
+        ));
     }
     Ok(current_user.unwrap())
 }
@@ -39,27 +35,28 @@ pub async fn get_current_user_by_username(
 pub async fn get_unique_by_username(
     username: &String,
     conn: &DatabaseConnection,
-) -> Result<Option<Model>, Result<HttpResponse, Error>> {
+) -> Result<Option<Model>, AppError> {
     let condition = Expr::col(user::Column::Username).eq(username.clone());
     let result_model = User::find().filter(condition).one(conn).await;
-    if let Some(value) = throw_response_error(&result_model) {
-        return value;
+    if result_model.is_err() {
+        let error = result_model.unwrap_err();
+        return Err(AppError::DbError(error, "".to_string()));
     }
 
-    Ok(result_model.unwrap())
+    Ok(result_model?)
 }
 pub async fn get_unique_by_email(
     email: &String,
     conn: &DatabaseConnection,
-) -> Result<Option<Model>, Result<HttpResponse, Error>> {
+) -> Result<Option<Model>, AppError> {
     let condition = Expr::col(user::Column::Email).eq(email.clone());
     let result_model = User::find().filter(condition).one(conn).await;
-    let current_user = result_model.as_ref().map(|s| s.clone()).unwrap();
-    if let Some(value) = throw_response_error(&result_model) {
-        return value;
+    if result_model.is_err() {
+        let error = result_model.unwrap_err();
+        return Err(AppError::DbError(error, "".to_string()));
     }
 
-    Ok(current_user)
+    Ok(result_model?)
 }
 
 pub async fn create_audit_log(
@@ -74,7 +71,10 @@ pub async fn create_audit_log(
         .unwrap_or("");
 
     let ip = http_req
-        .connection_info().peer_addr().unwrap_or("").to_string();
+        .connection_info()
+        .peer_addr()
+        .unwrap_or("")
+        .to_string();
 
     let platform = detect_os(&user_agent);
 
@@ -111,19 +111,4 @@ pub async fn update_audit_log(
     audit_data.refresh_token = Set(Some(refresh_token.clone()));
     audit_data.status = Set("SUCCESS".to_string());
     audit_data.update(conn).await.unwrap();
-}
-
-fn throw_response_error(
-    result_model: &Result<Option<Model>, DbErr>,
-) -> Option<Result<Option<Model>, Result<HttpResponse, Error>>> {
-    let cloned_data = result_model.as_ref().map(|s| s.clone());
-    if cloned_data.is_err() {
-        let response = CommonRs {
-            code: "5000".to_string(),
-            message: cloned_data.err().unwrap().to_string(),
-            data: "".to_string(),
-        };
-        return Some(Err(Ok(HttpResponse::InternalServerError().json(response))));
-    }
-    None
 }

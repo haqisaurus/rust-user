@@ -44,11 +44,13 @@ impl MigrationTrait for Migration {
                     .col(string(User::AccountType))
                     .col(timestamp(User::CreatedAt))
                     .col(string(User::CreatedBy))
-                    .col(timestamp(User::UpdatedAt))
-                    .col(string(User::UpdatedBy))
+                    .col(timestamp_null(User::UpdatedAt))
+                    .col(ColumnDef::new(User::UpdatedBy).string().null())
                     .col(integer(User::EmployeeId))
                     .col(timestamp_null(User::ActivatedAt))
                     .col(string(User::Photo))
+                    .col(timestamp_null(User::DeletedAt))
+                    .col(ColumnDef::new(User::DeletedBy).string().null())
                     .to_owned(),
             )
             .await
@@ -96,4 +98,6 @@ enum User {
     ActivatedAt,
     Photo,
     EmployeeId,
+    DeletedAt,
+    DeletedBy
 }

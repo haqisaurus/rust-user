@@ -1,17 +1,36 @@
 use crate::dto::common_dto::PaginationRq;
+use crate::dto::error_dto::AppError;
 use crate::dto::response_dto::{
     CommonRs, PaginationRs, UserAuditExampleRs, UserAuditJoinExampleRs, UserAuditNestedExampleRs,
 };
 use crate::models::prelude::{User, UserAudit};
-use crate::models::{user, user_audit};
+use crate::models::{company, user, user_audit};
 use crate::AppState;
 use actix_web::{web, Error, HttpResponse};
 use futures::future::join_all;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::extension::postgres::PgExpr;
 use sea_orm::{
-    EntityTrait, ModelTrait, PaginatorTrait, QueryFilter, QueryOrder
+    ActiveModelTrait, EntityTrait, ModelTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
+
+
+pub async fn error_handler(state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
+    let db = &state.conn;
+
+    // create company
+    let new_company = company::ActiveModel {
+        name: Set("req.company_name".to_string()),
+        description: Set("".to_string()),
+        ..Default::default()
+    };
+
+    let result = new_company.insert(db).await;
+    if result.is_err() {
+        return Err(AppError::DbError(result.err().unwrap(), "".to_string()));
+    }
+    Ok(HttpResponse::Ok().json(result?))
+}
 
 pub async fn get_test_join_json(state: web::Data<AppState>) -> Result<HttpResponse, Error> {
     let db = &state.conn;
@@ -97,6 +116,7 @@ pub async fn get_users(
             .filter(Expr::col(user::Column::Username).ilike(format!("%{}%", name.clone())));
     }
 
+
     // Sorting
     if let Some(ref sort_by) = query.sort_by {
         let order = match query.order.as_deref() {
@@ -119,7 +139,7 @@ pub async fn get_users(
     let data = paginator
         .fetch_page(page.saturating_sub(1))
         .await
-        .map_err(actix_web::error::ErrorInternalServerError)?;
+        .map_err(|e|AppError::DbError(e, "".to_string()))?;
 
     Ok(HttpResponse::Ok().json(CommonRs {
         message: "SUCCESS".to_string(),

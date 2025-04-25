@@ -26,8 +26,10 @@ impl MigrationTrait for Migration {
                     .col(text(Permission::Description).not_null())
                     .col(timestamp(Permission::CreatedAt))
                     .col(string(Permission::CreatedBy))
-                    .col(timestamp(Permission::UpdatedAt))
-                    .col(string(Permission::UpdatedBy))
+                    .col(timestamp_null(Permission::UpdatedAt))
+                    .col(ColumnDef::new(Permission::UpdatedBy).string().null())
+                    .col(timestamp_null(Permission::DeletedAt))
+                    .col(ColumnDef::new(Permission::DeletedBy).string().null())
                     .to_owned(),
             )
             .await
@@ -54,4 +56,6 @@ enum Permission {
     CreatedBy,
     UpdatedAt,
     UpdatedBy,
+    DeletedAt,
+    DeletedBy
 }
