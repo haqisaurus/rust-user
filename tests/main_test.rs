@@ -1,9 +1,9 @@
-use std::env;
-use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
-use aes_gcm::aead::{Aead, OsRng};
 use aes_gcm::aead::rand_core::RngCore;
+use aes_gcm::aead::{Aead, OsRng};
+use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
 use base64::encode;
 use dotenv::dotenv;
+use std::env;
 
 #[test]
 fn it_works() {

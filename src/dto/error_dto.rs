@@ -20,6 +20,7 @@ pub enum AppError {
     BadRequest(u32, String),
     InternalError(u32, String),
     Unauthorized(u32, String),
+    Forbidden(u32, String),
 }
 
 impl Display for AppError {
@@ -64,6 +65,13 @@ impl ResponseError for AppError {
                     (StatusCode::UNAUTHORIZED, code.clone(), serde_json::json!(item.clone().1.to_string()))
                 } else {
                     (StatusCode::UNAUTHORIZED, 401000u32, if msg.is_empty() { serde_json::json!("Unauthorized Request".to_string()) } else { serde_json::json!(msg.to_string()) })
+                }
+            }
+            AppError::Forbidden(code,  msg) => {
+                if let Some(item) = ERRORS.iter().find(|(id, _)| id == code) {
+                    (StatusCode::FORBIDDEN, code.clone(), serde_json::json!(item.clone().1.to_string()))
+                } else {
+                    (StatusCode::FORBIDDEN, 403000u32, if msg.is_empty() { serde_json::json!("Forbidden Request".to_string()) } else { serde_json::json!(msg.to_string()) })
                 }
             }
             AppError::ValidationRequest(code, message ) => {

@@ -1,9 +1,9 @@
 use crate::dto::common_dto::{Claims, PaginationRq};
 use crate::dto::error_dto::AppError;
-use crate::dto::request_dto::PermissionRq;
-use crate::dto::response_dto::{CommonRs, PaginationRs, PermissionRs};
-use crate::models::permission;
-use crate::models::permission::ActiveModel;
+use crate::dto::request_dto::RoleRq;
+use crate::dto::response_dto::{CommonRs, PaginationRs, RoleRs};
+use crate::models::role;
+use crate::models::role::ActiveModel;
 use crate::AppState;
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse};
 use chrono::Local;
@@ -13,9 +13,9 @@ use sea_orm::{
     QueryFilter, QueryOrder, Set, TransactionTrait,
 };
 
-pub async fn permission_save(
+pub async fn role_save(
     data: web::Data<AppState>,
-    req: web::Json<PermissionRq>,
+    req: web::Json<RoleRq>,
     http_request: HttpRequest,
 ) -> Result<HttpResponse, AppError> {
     let token_data = http_request.extensions().get::<Claims>().cloned().unwrap();
@@ -25,7 +25,7 @@ pub async fn permission_save(
     let txn = conn.begin().await?;
 
     if req.id.is_none() {
-        let new_data = permission::ActiveModel {
+        let new_data = role::ActiveModel {
             name: Set(req.name.clone()),
             description: Set(req.description.clone()),
             group: Set(req.group.clone()),
@@ -44,8 +44,8 @@ pub async fn permission_save(
             return Err(AppError::DbError(result.err().unwrap(), "".to_string()));
         }
     } else {
-        let permission_id = req.id.unwrap();
-        let result = permission::Entity::find_by_id(permission_id)
+        let role_id = req.id.unwrap();
+        let result = role::Entity::find_by_id(role_id)
             .one(conn)
             .await;
         if result.is_err() {
@@ -59,13 +59,13 @@ pub async fn permission_save(
             return Err(AppError::NotFound(400005, "".to_string()));
         }
 
-        let mut permission_model: ActiveModel = model.unwrap().into_active_model();
-        permission_model.name = Set(req.name.clone());
-        permission_model.group = Set(req.group.clone());
-        permission_model.description = Set(req.description.clone());
-        permission_model.updated_at = Set(Some(Local::now().naive_local()));
-        permission_model.updated_by = Set(Some(username.clone()));
-        permission_model.update(conn).await?;
+        let mut role_model: ActiveModel = model.unwrap().into_active_model();
+        role_model.name = Set(req.name.clone());
+        role_model.group = Set(req.group.clone());
+        role_model.description = Set(req.description.clone());
+        role_model.updated_at = Set(Some(Local::now().naive_local()));
+        role_model.updated_by = Set(Some(username.clone()));
+        role_model.update(conn).await?;
     }
 
     txn.commit().await?;
@@ -76,20 +76,20 @@ pub async fn permission_save(
     }))
 }
 
-pub async fn permission_detail(
+pub async fn role_detail(
     data: web::Data<AppState>,
     path: web::Path<i64>,
 ) -> Result<HttpResponse, AppError> {
     let conn = &data.conn;
-    let permission_id = path.into_inner();
-    let result = permission::Entity::find_by_id(permission_id)
+    let role_id = path.into_inner();
+    let result = role::Entity::find_by_id(role_id)
         .one(conn)
         .await;
     if result.is_err() {
         return Err(AppError::DbError(result.unwrap_err(), "".to_string()));
     }
 
-    let res = result?.map(|e| PermissionRs {
+    let res = result?.map(|e| RoleRs {
         id: e.id,
         name: e.name.clone(),
         description: e.description.clone(),
@@ -105,7 +105,7 @@ pub async fn permission_detail(
     Ok(HttpResponse::Ok().json(res))
 }
 
-pub async fn permission_list(
+pub async fn role_list(
     data: web::Data<AppState>,
     query: web::Query<PaginationRq>,
 ) -> Result<HttpResponse, AppError> {
@@ -113,8 +113,8 @@ pub async fn permission_list(
     let page = query.page.unwrap_or(1);
     let per_page = query.per_page.unwrap_or(10);
 
-    let mut query_builder = permission::Entity::find();
-    query_builder = query_builder.filter(Expr::col(permission::Column::DeletedAt).is_null());
+    let mut query_builder = role::Entity::find();
+    query_builder = query_builder.filter(Expr::col(role::Column::DeletedAt).is_null());
 
     // Sorting
     if let Some(ref sort_by) = query.sort_by {
@@ -124,9 +124,9 @@ pub async fn permission_list(
         };
 
         query_builder = match sort_by.as_str() {
-            "name" => query_builder.order_by(permission::Column::Name, order),
-            "group" => query_builder.order_by(permission::Column::Group, order),
-            "created_at" => query_builder.order_by(permission::Column::CreatedAt, order),
+            "name" => query_builder.order_by(role::Column::Name, order),
+            "group" => query_builder.order_by(role::Column::Group, order),
+            "created_at" => query_builder.order_by(role::Column::CreatedAt, order),
             _ => query_builder,
         };
     }
@@ -142,7 +142,7 @@ pub async fn permission_list(
 
     let content = data
         .into_iter()
-        .map(|e| PermissionRs {
+        .map(|e| RoleRs {
             id: e.id,
             name: e.name.clone(),
             description: e.description.clone(),
@@ -154,7 +154,7 @@ pub async fn permission_list(
             deleted_at: e.deleted_at.clone(),
             deleted_by: e.deleted_by.clone(),
         })
-        .collect::<Vec<PermissionRs>>();
+        .collect::<Vec<RoleRs>>();
 
     Ok(HttpResponse::Ok().json(CommonRs {
         message: "SUCCESS".to_string(),
@@ -169,7 +169,7 @@ pub async fn permission_list(
     }))
 }
 
-pub async fn permission_delete(
+pub async fn role_delete(
     data: web::Data<AppState>,
     path: web::Path<i64>,
     req: HttpRequest,
@@ -178,9 +178,9 @@ pub async fn permission_delete(
     let username = token_data.sub.clone();
 
     let conn = &data.conn;
-    let permission_id = path.into_inner();
-    let result = permission::Entity::find_by_id(permission_id)
-        .filter(permission::Column::DeletedAt.is_null())
+    let role_id = path.into_inner();
+    let result = role::Entity::find_by_id(role_id)
+        .filter(role::Column::DeletedAt.is_null())
         .one(conn)
         .await;
     if result.is_err() {
@@ -192,14 +192,14 @@ pub async fn permission_delete(
         return Err(AppError::NotFound(400005, "".to_string()));
     }
 
-    let mut permission_model: ActiveModel = model.unwrap().into_active_model();
+    let mut role_model: ActiveModel = model.unwrap().into_active_model();
 
     // Update name attribute
-    permission_model.deleted_by = Set(Some(username.clone()));
-    permission_model.deleted_at = Set(Some(Local::now().naive_local()));
-    permission_model.updated_by = Set(Some(username));
-    permission_model.updated_at = Set(Some(Local::now().naive_local()));
-    permission_model.update(conn).await?;
+    role_model.deleted_by = Set(Some(username.clone()));
+    role_model.deleted_at = Set(Some(Local::now().naive_local()));
+    role_model.updated_by = Set(Some(username));
+    role_model.updated_at = Set(Some(Local::now().naive_local()));
+    role_model.update(conn).await?;
     Ok(HttpResponse::Ok().json(CommonRs {
         message: "SUCCESS".to_string(),
         code: "0".to_string(),

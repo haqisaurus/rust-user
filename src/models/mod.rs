@@ -5,3 +5,5 @@ pub mod company;
 pub mod permission;
 pub mod role;
 pub mod rel_role_permission;
+pub mod rel_user_company_role;
+pub mod rel_user_company_permission;

@@ -47,16 +47,20 @@ pub struct Model {
     pub account_type: String,
     // #[sea_orm(column_type = "BigInteger", column_name = "employee_id")]
     // pub employee_id: i64,
+    #[sea_orm(column_name = "activated_at")]
+    pub activated_at: Option<DateTime>,
     #[sea_orm(column_name = "created_at")]
     pub created_at: DateTime,
     #[sea_orm(column_name = "created_by")]
     pub created_by: String,
-    #[sea_orm(column_name = "activated_at")]
-    pub activated_at: Option<DateTime>,
     #[sea_orm(column_name = "updated_at")]
-    pub updated_at: DateTime,
+    pub updated_at: Option<DateTime>,
     #[sea_orm(column_name = "updated_by")]
-    pub updated_by: String,
+    pub updated_by: Option<String>,
+    #[sea_orm(column_name = "deleted_at")]
+    pub deleted_at: Option<DateTime>,
+    #[sea_orm(column_name = "deleted_by")]
+    pub deleted_by: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
@@ -71,21 +75,27 @@ impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
             Self::UserAudit => Entity::has_many(super::user_audit::Entity).into(),
-            Self::Company => Entity::has_many(super::user_audit::Entity).into(),
+            Self::Company => Entity::has_many(super::rel_user_company_role::Entity).into(),
         }
     }
 }
 
+// 1 to m
 impl Related<super::user_audit::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::UserAudit.def()
     }
 }
 
-impl Related<super::company::Entity> for Entity {
+// m to m
+impl Related<super::company::Entity> for crate::models::user::Entity {
     fn to() -> RelationDef {
-        Relation::Company.def()
+        super::rel_user_company_role::Relation::Company.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::rel_user_company_role::Relation::User.def().rev())
     }
 }
+
 
 impl ActiveModelBehavior for ActiveModel {}

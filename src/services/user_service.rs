@@ -8,13 +8,17 @@ use actix_web::web::Json;
 use actix_web::HttpRequest;
 use chrono::Local;
 use sea_orm::prelude::Expr;
+use sea_orm::sea_query::IntoCondition;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 
-pub async fn get_current_user_by_username(
+pub async fn get_current_user_by_username_is_active(
     login_req: &Json<LoginRq>,
     conn: &DatabaseConnection,
 ) -> Result<Model, AppError> {
-    let condition = Expr::col(user::Column::Username).eq(login_req.username.clone());
+    let username_cond = Expr::col(user::Column::Username).eq(login_req.username.clone());
+    let active_cond = Expr::col(user::Column::Activated).eq(true);
+    let block_web_cond = Expr::col(user::Column::DisableWeb).eq(false);
+    let condition = username_cond.and(active_cond).and(block_web_cond).into_condition();
     let result_model = User::find().filter(condition).one(conn).await;
     let current_user = result_model.as_ref().map(|s| s.clone()).unwrap();
     if result_model.is_err() {
@@ -110,5 +114,6 @@ pub async fn update_audit_log(
     audit_data.token = Set(Some(token.clone()));
     audit_data.refresh_token = Set(Some(refresh_token.clone()));
     audit_data.status = Set("SUCCESS".to_string());
+    audit_data.expired_at = Set(Some(Local::now().naive_local()));
     audit_data.update(conn).await.unwrap();
 }

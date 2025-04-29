@@ -6,19 +6,19 @@ mod routes;
 mod services;
 mod utils;
 
+use crate::dto::error_dto::ErrorResponse;
 use actix_web::body::BoxBody;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
-use actix_web::middleware::{Logger, Next, from_fn};
-use actix_web::{App, Error, HttpMessage, HttpResponse, HttpServer, web};
+use actix_web::middleware::{from_fn, Logger, Next};
+use actix_web::{web, App, Error, HttpMessage, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use dto::common_dto::Claims;
 use env_logger::Env;
 use jsonwebtoken::errors::ErrorKind;
-use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use routes::user_routes::init_routes;
 use sea_orm::DatabaseConnection;
 use std::env;
-use crate::dto::error_dto::ErrorResponse;
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -35,8 +35,13 @@ async fn member_middleware(
         .and_then(|h| h.to_str().ok())
         .and_then(|auth| auth.strip_prefix("Bearer "))
         .unwrap_or("");
-
-    if req.path() == "/api/login" || req.path() == "/api/logout" || req.path() == "/api/register" {
+    let re_activation = regex::Regex::new(r"^/api/activation/\w+$").unwrap();
+    if req.path() == "/api/login"
+        || req.path() == "/api/logout"
+        || req.path() == "/api/register"
+        || re_activation.is_match(req.path())
+        || req.path() == "/api/refresh-token" {
+        // println!("{:?}", req.path());
         return next.call(req).await.map(|res| res.map_into_boxed_body());
     }
 
@@ -81,7 +86,10 @@ async fn member_middleware(
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let debug_level = env::var("DEBUG_LEVEL").unwrap_or_else(|_| "info".to_string());
-    env_logger::init_from_env(Env::default().default_filter_or(debug_level));
+    // env_logger::init_from_env(Env::default().default_filter_or(debug_level));
+    env_logger::Builder::from_env(Env::default().default_filter_or(debug_level))
+        .filter_module("sqlx::query", log::LevelFilter::Warn) // atur log module sqlx
+        .init();
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
 

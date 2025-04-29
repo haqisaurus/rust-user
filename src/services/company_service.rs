@@ -1,7 +1,7 @@
 use crate::dto::error_dto::AppError;
+use crate::models::company;
 use crate::models::company::Model;
 use crate::models::prelude::Company;
-use crate::models::company;
 use sea_orm::prelude::Expr;
 use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter};
 

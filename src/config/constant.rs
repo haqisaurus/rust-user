@@ -17,6 +17,9 @@ pub static ERRORS: &[(u32, &str)] = &[
     (401003, "Username already in use"),
     (401004, "Token Error"),
 
+    (403000, "Forbidden access"),
+    (403001, "Role not found"),
+
 
     (500002, "Cannot email"),
 ];

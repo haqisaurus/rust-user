@@ -2,4 +2,6 @@
 
 pub use super::company::Entity as Company;
 pub use super::user::Entity as User;
+// pub use super::role::Entity as Role;
+// pub use super::permission::Entity as Permission;
 pub use super::user_audit::Entity as UserAudit;
